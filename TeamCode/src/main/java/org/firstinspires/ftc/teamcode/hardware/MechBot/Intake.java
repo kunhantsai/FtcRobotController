@@ -20,7 +20,9 @@ public class Intake extends Logger<Intake>  {
     private DcMotorEx intake1;
     private DcMotorEx intake2;
 
-    private final double IntakeSpeed = 1.0;
+    private double IntakeSpeed = 1000;
+    private double IntakePower = 0.8;
+
     private boolean isIntakeOn = false;
 
     public String getUniqueName() {
@@ -62,19 +64,36 @@ public class Intake extends Logger<Intake>  {
 
     public void intakeOut(){
         if (intake1!=null)
+            intake1.setPower(IntakePower);
+        if (intake2!=null)
+            intake2.setPower(IntakePower);
+        isIntakeOn = true;
+    }
+
+    public void intakeIn(){
+        if (intake1!=null)
+            intake1.setPower(-IntakePower);
+        if (intake2!=null)
+            intake2.setPower(-IntakePower);
+        isIntakeOn = true;
+    }
+
+    public void intakeOutBySpeed(){
+        if (intake1!=null)
             intake1.setPower(IntakeSpeed);
         if (intake2!=null)
             intake2.setPower(IntakeSpeed);
         isIntakeOn = true;
     }
 
-    public void intakeIn(){
+    public void intakeInBySpeed(){
         if (intake1!=null)
             intake1.setPower(-IntakeSpeed);
         if (intake2!=null)
             intake2.setPower(-IntakeSpeed);
         isIntakeOn = true;
     }
+
     public void intakeInAuto(){
         if(isIntakeOn)
             stop();
@@ -99,10 +118,16 @@ public class Intake extends Logger<Intake>  {
         Telemetry.Line line = telemetry.addLine();
 
         if (intake1 != null) {
-            line.addData("Intake1", "pow=%.2f", new Func<Double>() {
+            line.addData("Intake1", "pow=%.2f/tps=%2.0f", new Func<Double>() {
                 @Override
                 public Double value() {
                     return intake1.getPower();
+                }
+            });
+            line.addData(" | Intake1", new Func<String>() {
+                @Override
+                public String value() {
+                    return String.format("(pow=%.2f/tps=%2.0f)\n", intake1.getPower(), intake1.getVelocity());
                 }
             });
         }
