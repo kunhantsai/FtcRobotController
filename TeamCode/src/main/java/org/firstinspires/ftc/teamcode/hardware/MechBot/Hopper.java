@@ -250,6 +250,7 @@ public class Hopper extends Logger<Hopper> implements Configurable {
             @Override
             public Progress start() {
                 blockerUp();
+                ringBarUp();
                 ringLifter.setPower(-1);
                 HopperTimer.reset();
                 return new Progress() {
