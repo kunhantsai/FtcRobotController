@@ -80,17 +80,17 @@ public class Intake extends Logger<Intake>  {
 
     public void intakeOutBySpeed(){
         if (intake1!=null)
-            intake1.setPower(IntakeSpeed);
+            intake1.setVelocity(IntakeSpeed);
         if (intake2!=null)
-            intake2.setPower(IntakeSpeed);
+            intake2.setVelocity(IntakeSpeed);
         isIntakeOn = true;
     }
 
     public void intakeInBySpeed(){
         if (intake1!=null)
-            intake1.setPower(-IntakeSpeed);
+            intake1.setVelocity(-IntakeSpeed);
         if (intake2!=null)
-            intake2.setPower(-IntakeSpeed);
+            intake2.setVelocity(-IntakeSpeed);
         isIntakeOn = true;
     }
 
@@ -118,12 +118,6 @@ public class Intake extends Logger<Intake>  {
         Telemetry.Line line = telemetry.addLine();
 
         if (intake1 != null) {
-            line.addData("Intake1", "pow=%.2f/tps=%2.0f", new Func<Double>() {
-                @Override
-                public Double value() {
-                    return intake1.getPower();
-                }
-            });
             line.addData(" | Intake1", new Func<String>() {
                 @Override
                 public String value() {

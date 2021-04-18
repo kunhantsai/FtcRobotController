@@ -1344,7 +1344,7 @@ public class ToboMech extends Logger<ToboMech> implements Robot2 {
         TaskManager.add(new Task() {
             @Override
             public Progress start() {
-                intake.intakeIn();
+                intake.intakeInBySpeed();
                 return new Progress() {
                     @Override
                     public boolean isDone() {
@@ -2038,7 +2038,7 @@ public class ToboMech extends Logger<ToboMech> implements Robot2 {
                 chassis.driveTo(0.9, side(12), 165, -20, false, 3);
             } else if (tZone == TargetZone.ZONE_B) {//1
                 shooter.shootOutByRpm(WARM_UP_RPM_AUTO);
-                intake.intakeIn();
+                intake.intakeInBySpeed();
                 chassis.driveTo(0.8, side(75), 165, 0, false, 5);
                 sleep(500); //to allow time for intaking the bonus ring
                 intake.stop();
@@ -2070,7 +2070,7 @@ public class ToboMech extends Logger<ToboMech> implements Robot2 {
                 while (!TaskManager.isComplete("Transfer Down Combo")) {
                     TaskManager.processTasks();
                 }
-                intake.intakeIn();
+                intake.intakeInBySpeed();
                 chassis.driveTo(1.0, side(5), 287, 0, false, 2.5);
                 intake.stop();
             } else {
@@ -2209,7 +2209,7 @@ public class ToboMech extends Logger<ToboMech> implements Robot2 {
         if (!fromAuto) {
             chassis.driveTo(0.6, side(87), 90, 0, false, 2);
         }
-        intake.intakeIn();
+        intake.intakeInBySpeed();
         chassis.driveTo(0.25, chassis.odo_x_pos_cm(), 89+n*12, 2);
         if(hopper != null) {
             hopper.ringBarUp();
@@ -2238,7 +2238,7 @@ public class ToboMech extends Logger<ToboMech> implements Robot2 {
         chassis.yMove(1, -0.35);
         sleep(250);
         chassis.yMove(1, 0.17);
-        intake.intakeIn();
+        intake.intakeInBySpeed();
         for (int i = 0; i < n; i++) {
             sleep(650);
             if(i+2==n)
