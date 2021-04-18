@@ -20,7 +20,7 @@ public class Intake extends Logger<Intake>  {
     private DcMotorEx intake1;
     private DcMotorEx intake2;
 
-    private double IntakeSpeed = 1000;
+    private double IntakeSpeed = 2000;
     private double IntakePower = 0.8;
 
     private boolean isIntakeOn = false;
@@ -98,14 +98,14 @@ public class Intake extends Logger<Intake>  {
         if(isIntakeOn)
             stop();
         else
-            intakeIn();
+            intakeInBySpeed();
     }
 
     public void intakeOutAuto(){
         if(isIntakeOn)
             stop();
         else
-            intakeOut();
+            intakeOutBySpeed();
     }
 
     /**
