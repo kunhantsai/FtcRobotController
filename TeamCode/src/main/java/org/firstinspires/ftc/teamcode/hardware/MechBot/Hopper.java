@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode.hardware.MechBot;
 
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -30,6 +32,8 @@ public class Hopper extends Logger<Hopper> implements Configurable {
     private AdjustableServo holder;
     private AdjustableServo blocker;
     private AdjustableServo ringBar;
+    private DcMotorEx hopperSlider;
+
     public CRServo ringLifter;
     /*private*/ public TouchSensor magLow;
     /*private*/ public TouchSensor magHigh;
@@ -53,6 +57,13 @@ public class Hopper extends Logger<Hopper> implements Configurable {
     private final double RING_BAR_UP = 0.26;
     private final double RING_BAR_INIT = 0.26;
     private final double RING_BAR_DOWN = 0.82;
+
+    private final double HOPPER_SLIDER_SPEED = 1000;
+
+    private final int HOPPER_SLIDER_DOWN = 0;
+    private final int HOPPER_SLIDER_UP = 500;
+    private final int HOPPER_SLIDER_MIN = 0;
+    private final int HOPPER_SLIDER_MAX = 3000;
 
     private boolean feederIsIn = true;
     private boolean holderIsIn = true;
@@ -109,6 +120,15 @@ public class Hopper extends Logger<Hopper> implements Configurable {
         ringBar = new AdjustableServo(0, 1).configureLogging(
                 logTag + ":hopper", logLevel
         );
+
+        hopperSlider = configuration.getHardwareMap().get(DcMotorEx.class, "hopperSlider");
+        if (hopperSlider != null) {
+            hopperSlider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            hopperSlider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            hopperSlider.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            // armMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        }
+
         ringBar.configure(configuration.getHardwareMap(), "ringBar");
         configuration.register(feeder);
         configuration.register(holder);
@@ -120,6 +140,59 @@ public class Hopper extends Logger<Hopper> implements Configurable {
 
         // servoInit();
       // configuration.register(this);
+    }
+
+    public void hopperSliderStop() {
+        if (hopperSlider==null) return;
+        hopperSlider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        hopperSlider.setPower(0);
+    }
+
+    public Progress hopperSlideToPos(int pos) {
+        if (hopperSlider==null) return null;
+        hopperSlider.setTargetPosition(pos);
+        hopperSlider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        hopperSlider.setVelocity(HOPPER_SLIDER_SPEED);
+        return new Progress() {
+            public boolean isDone() {
+                if (Math.abs(hopperSlider.getCurrentPosition() - hopperSlider.getTargetPositionTolerance()) < 50) {
+                    return true;
+                }
+                return !hopperSlider.isBusy();
+            }
+        };
+    }
+
+    public void sliderUp(boolean forced) {
+        if (hopperSlider==null) return;
+        hopperSlider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        int pos = hopperSlider.getCurrentPosition();
+        if ((pos>=HOPPER_SLIDER_MAX) && !forced) {
+            hopperSliderStop();
+            return;
+        }
+            pos = Math.min(pos+100, HOPPER_SLIDER_MAX);
+        hopperSlider.setTargetPosition(pos);
+        hopperSlider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        hopperSlider.setVelocity(HOPPER_SLIDER_SPEED);
+        // armMotor.setPower(ARM_POWER);
+        // armIsDown = false;
+    }
+
+    public void sliderDown(boolean forced) {
+        if (hopperSlider==null) return;
+        hopperSlider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        int pos = hopperSlider.getCurrentPosition();
+        if (pos<=HOPPER_SLIDER_DOWN && !forced) {
+            hopperSliderStop();
+            return;
+        }
+        pos=Math.max(pos-100,HOPPER_SLIDER_DOWN);
+        hopperSlider.setTargetPosition(pos);
+        hopperSlider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        hopperSlider.setVelocity(-HOPPER_SLIDER_SPEED);
+        // armMotor.setPower(-ARM_POWER);
+        // armIsDown = true;
     }
 
     public void servoInit() {
@@ -459,6 +532,17 @@ public class Hopper extends Logger<Hopper> implements Configurable {
             });
         }
 
+        if (hopperSlider != null) {
+            line.addData("hopperSlider", "%s", new Func<String>() {
+                @Override
+                public String value() {
+                    String s = String.format("pos=%d, pw=%.1f, speed=%.1f", hopperSlider.getCurrentPosition(), hopperSlider.getPower(),
+                            hopperSlider.getVelocity());
+                    return s;
+                }
+            });
+        }
+
         if (feeder != null) {
             line.addData("Feeder", "pos=%.2f", new Func<Double>() {
                 @Override
@@ -512,7 +596,6 @@ public class Hopper extends Logger<Hopper> implements Configurable {
                 }
             });
         }
-
 
     }
 
