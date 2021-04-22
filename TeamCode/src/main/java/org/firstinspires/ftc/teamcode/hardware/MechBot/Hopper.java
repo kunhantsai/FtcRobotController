@@ -121,7 +121,7 @@ public class Hopper extends Logger<Hopper> implements Configurable {
                 logTag + ":hopper", logLevel
         );
 
-        hopperSlider = configuration.getHardwareMap().get(DcMotorEx.class, "hopperSlider");
+        //hopperSlider = configuration.getHardwareMap().get(DcMotorEx.class, "hopperSlider");
         if (hopperSlider != null) {
             hopperSlider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             hopperSlider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);

@@ -2043,6 +2043,8 @@ public class ToboMech extends Logger<ToboMech> implements Robot2 {
         if (side == ProgramType.AUTO_BLUE) {
             if (tZone == TargetZone.ZONE_A) {//0
                 // chassis.driveTo(.8, side(30), 40, 0, false, 2);
+                if(comboGrabber != null)
+                        comboGrabber.armUpLow();
                 chassis.driveTo(0.9, side(12), 165, -20, false, 3);
             } else if (tZone == TargetZone.ZONE_B) {//1
                 shooter.shootOutByRpm(WARM_UP_RPM_AUTO);
