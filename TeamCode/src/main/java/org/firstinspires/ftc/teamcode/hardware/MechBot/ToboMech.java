@@ -405,7 +405,7 @@ public class ToboMech extends Logger<ToboMech> implements Robot2 {
                     }
                 } else if (source.getTrigger(Events.Side.LEFT) > 0.2 && chassis != null) { // shoot high goal using Vuforia (x,y)
                     rotateToTargetAndStartShooter(MechChassis.ShootingTarget.TOWER, false);
-                }  else if(source.getTrigger(Events.Side.RIGHT) < 0.2){
+                }  else if(source.getTrigger(Events.Side.RIGHT) > 0.2){
                     if(hopper != null){
                         hopper.sliderUp(true);
                     }
@@ -450,7 +450,7 @@ public class ToboMech extends Logger<ToboMech> implements Robot2 {
                         shooter.shootSpeedDec();
                         shooting_rpm = shooter.shooterSpeed;
                     }
-                } else if(source.getTrigger(Events.Side.RIGHT) < 0.2){
+                } else if(source.getTrigger(Events.Side.RIGHT) > 0.2){
                     if(hopper != null){
                         hopper.sliderDown(true);
                     }
@@ -1844,13 +1844,13 @@ public class ToboMech extends Logger<ToboMech> implements Robot2 {
                 chassis.getGPS().correctHeading(-chassis.odo_heading());
                 sleep(100);
             }
-            target_heading=chassis.odo_heading()+2.3;
+            target_heading=chassis.odo_heading()+2.6;
         } else {
             chassis.rotateTo(0.3, 0);
             sleep(200);
             target_heading=(angleCollection?2.3:chassis.odo_heading());
         }
-        double idealRightDist = 62; // 43 cm at Hans field; 61 cm at Winston's house
+        double idealRightDist = 62; // 45 cm at Hans field; 62 cm at Winston's house
         double crab_power=0.5;
         double timeout=3.0;
         for (int i=0; i<5; i++) {
@@ -1876,7 +1876,7 @@ public class ToboMech extends Logger<ToboMech> implements Robot2 {
         }
         // chassis.rotateTo(0.3, 0);//delete?
         double angle_error = 0.5;
-        double LOCAL_ALIGNMENT_POWER = 0.18;
+        double LOCAL_ALIGNMENT_POWER = 0.175;
         double ALIGN_ITER = 5;
         if(angleCollection){
             if (Math.abs(chassis.odo_heading() - target_heading) >= angle_error) {
@@ -1916,6 +1916,7 @@ public class ToboMech extends Logger<ToboMech> implements Robot2 {
                 false, false,2);
 
         if(angleCollection){
+            sleep(100);
             if (Math.abs(chassis.odo_heading() - target_heading) >= angle_error) {
                 if (Math.abs(chassis.odo_heading() - target_heading) > 10) {
                     chassis.rotateTo(0.3, target_heading);
@@ -1946,6 +1947,7 @@ public class ToboMech extends Logger<ToboMech> implements Robot2 {
                 false, false,2);
 
         if(angleCollection){
+            sleep(100);
             if (Math.abs(chassis.odo_heading() - target_heading) >= angle_error) {
                 if (Math.abs(chassis.odo_heading() - target_heading) > 10) {
                     chassis.rotateTo(0.3, target_heading);

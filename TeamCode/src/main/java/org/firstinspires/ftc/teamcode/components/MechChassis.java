@@ -165,7 +165,7 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
     private double servoCorrection;   // latest correction applied to leading wheels' servos to correct heading deviation
     private double curHeading = 0;
     private boolean useScalePower = true;//
-    private boolean setImuTelemetry = false;//unless debugging, don't set telemetry for imu
+    private boolean setImuTelemetry = true;//unless debugging, don't set telemetry for imu
     private boolean setRangeSensorTelemetry = true; //unless debugging, don't set telemetry for range sensor
     private boolean useOdometry = true;
     private boolean normalizeMode = false;
@@ -572,7 +572,7 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
         if ((auto || setRangeSensorTelemetry)) {
 
           if (robotVersion==1) {
-              leftRangeSensor = configuration.getHardwareMap().get(DistanceSensor.class, "leftRange");
+              // leftRangeSensor = configuration.getHardwareMap().get(DistanceSensor.class, "leftRange");
               rightFrontRangeSensor = configuration.getHardwareMap().get(DistanceSensor.class, "RFRange");
               rightBackRangeSensor = configuration.getHardwareMap().get(DistanceSensor.class, "RBRange");
 
@@ -1151,6 +1151,16 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
                         (simulation_mode?"Simulation":(getNormalizeMode()?"Normalized":"Speedy")));
             }
         });
+        if (setImuTelemetry) { // also show range sensors
+            line.addData("Range", new Func<String>() {
+                @Override
+                public String value() {
+                    return String.format("RF=%2.0f, RB=%2.0f",
+                           // getDistance(SwerveChassis.Direction.RIGHT_FRONT), getDistance(SwerveChassis.Direction.RIGHT_BACK));
+                            rightFrontRangeSensor.getDistance(DistanceUnit.CM),rightBackRangeSensor.getDistance(DistanceUnit.CM));
+                }
+            });
+        }
 //        if (leftRangeSensor != null) {
 //            line.addData("ran-L", "%.1f", new Func<Double>() {
 //                @Override
