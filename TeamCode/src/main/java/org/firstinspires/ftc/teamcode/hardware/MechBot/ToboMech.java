@@ -1840,8 +1840,9 @@ public class ToboMech extends Logger<ToboMech> implements Robot2 {
         double target_heading=(angleCollection?2.3:chassis.odo_heading());
         if (driverAligned) {
             // assume robot is facing 0 degree by driver. Ues this to correct IMU
-            if (chassis.getGPS()!=null && Math.abs(chassis.odo_heading())>3.0) {
-                chassis.getGPS().correctHeading(-chassis.odo_heading());
+            double imu_heading = chassis.orientationSensor.getHeading();
+            if (chassis.getGPS()!=null) {
+                chassis.getGPS().correctHeading(imu_heading);
                 sleep(100);
             }
             target_heading=chassis.odo_heading()+2.6;
@@ -1943,7 +1944,7 @@ public class ToboMech extends Logger<ToboMech> implements Robot2 {
         //chassis.rawRotateTo(0.25, chassis.odo_heading()+3.5, false, 1);
 
         //chassis.driveStraight(0.5, 19, 90, 2);
-        chassis.driveTo(0.5, chassis.odo_x_pos_cm() - 18, chassis.odo_y_pos_cm(), chassis.odo_heading(),
+        chassis.driveTo(0.5, chassis.odo_x_pos_cm() - 19, chassis.odo_y_pos_cm(), chassis.odo_heading(),
                 false, false,2);
 
         if(angleCollection){
