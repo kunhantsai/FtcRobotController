@@ -17,6 +17,7 @@ import java.io.IOException;
 /**
  * Created by 28761 on 6/29/2019.
  */
+@Disabled
 @Autonomous(name = "Blue Out Power Shots", group = "MechBot")
 public class AutoBlueOutPowerShots extends LinearOpMode {
     private ToboSigma.SkystoneLocation StoneLoc;
