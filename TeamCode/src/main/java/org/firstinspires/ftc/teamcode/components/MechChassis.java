@@ -265,7 +265,7 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
     DcMotorEx verticalRightEncoder;
     DcMotorEx horizontalEncoder;
     OdometryGlobalCoordinatePosition GPS;
-    double ODO_COUNTS_PER_INCH = 303.71;
+    double ODO_COUNTS_PER_INCH = 307.7; // 303.71;
     double ODO_COUNTS_PER_CM = ODO_COUNTS_PER_INCH / 2.54;
 
     String rfName = "motorFR" , lfName = "motorFL";

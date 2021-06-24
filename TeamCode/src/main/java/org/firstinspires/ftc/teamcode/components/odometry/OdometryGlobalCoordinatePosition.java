@@ -19,7 +19,7 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
     private CombinedOrientationSensor orientationSensor;
     //Thead run condition
     private boolean isRunning = true;
-    private boolean useIMU = true;
+    private boolean useIMU = false;
     //Position variables used for storage and calculations
     double initRadians = 0;
     double verticalRightEncoderWheelPosition = 0, verticalLeftEncoderWheelPosition = 0, normalEncoderWheelPosition = 0,  changeInRobotOrientation = 0;
@@ -29,7 +29,7 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
     private double ySpeedLogs[] = {0,0,0,0,0};
     private int count=0;
     private double previousVerticalRightEncoderWheelPosition = 0, previousVerticalLeftEncoderWheelPosition = 0, prevNormalEncoderWheelPosition = 0;
-    private double DEFAULT_COUNTS_PER_INCH = 303.7; //307.699557;
+    private double DEFAULT_COUNTS_PER_INCH = 307.7; // 303.71; //307.699557;
     // private double netRotations; // clockwise rotations in degrees
     private double rRotations; // clockwise rotations in degrees
     private double lRotations; // counter-clockwise rotations in degrees
