@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.components;
 
 import com.qualcomm.hardware.lynx.LynxModule;
-import com.qualcomm.hardware.stmicroelectronics.VL53L0X;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -16,7 +15,6 @@ import org.firstinspires.ftc.teamcode.support.Logger;
 import org.firstinspires.ftc.teamcode.support.hardware.Adjustable;
 import org.firstinspires.ftc.teamcode.support.hardware.Configurable;
 import org.firstinspires.ftc.teamcode.support.hardware.Configuration;
-import org.firstinspires.ftc.teamcode.support.tasks.Task;
 import org.firstinspires.ftc.teamcode.support.tasks.TaskManager;
 
 import java.io.FileOutputStream;
@@ -26,7 +24,6 @@ import java.util.List;
 import static java.lang.Math.PI;
 import static java.lang.Math.abs;
 import static java.lang.Math.cos;
-import static java.lang.Math.pow;
 import static java.lang.Math.sin;
 import static java.lang.Thread.sleep;
 
@@ -203,8 +200,8 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
     }
     public void calibrateRobotByVersion() {
         if (robotVersion == 2) {
-            ODO_COUNTS_PER_INCH = 334.6;
-            ODO_COUNTS_PER_CM = ODO_COUNTS_PER_INCH / 2.54;
+            ODO_Y_COUNTS_PER_INCH = 334.6;
+            ODO_Y_COUNTS_PER_CM = ODO_Y_COUNTS_PER_INCH / 2.54;
             ratioFL = 14460.0 / 14503.0;
             ratioFR = 14460.0 / 14710.0;
             ratioBL = 14460.0 / 14756.0;
@@ -265,8 +262,10 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
     DcMotorEx verticalRightEncoder;
     DcMotorEx horizontalEncoder;
     OdometryGlobalCoordinatePosition GPS;
-    double ODO_COUNTS_PER_INCH = 307.7; // 303.71;
-    double ODO_COUNTS_PER_CM = ODO_COUNTS_PER_INCH / 2.54;
+    double ODO_Y_COUNTS_PER_INCH = 307.7; // 303.71;
+    double ODO_X_COUNTS_PER_INCH = 305.6; // 303.71;
+    double ODO_Y_COUNTS_PER_CM = ODO_Y_COUNTS_PER_INCH / 2.54;
+    double ODO_X_COUNTS_PER_CM = ODO_X_COUNTS_PER_INCH / 2.54;
 
     String rfName = "motorFR" , lfName = "motorFL";
     String rbName = "motorBR";
@@ -281,8 +280,10 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
 
     public void setGlobalPosUpdate(OdometryGlobalCoordinatePosition val) { GPS =val;}
     public OdometryGlobalCoordinatePosition getGPS() { return GPS; }
-    public double odo_count_per_inch() {return ODO_COUNTS_PER_INCH;}
-    public double odo_count_per_cm() {return ODO_COUNTS_PER_CM;}
+    public double odo_y_count_per_inch() {return ODO_Y_COUNTS_PER_INCH;}
+    public double odo_x_count_per_inch() {return ODO_X_COUNTS_PER_INCH;}
+    public double odo_y_count_per_cm() {return ODO_Y_COUNTS_PER_CM;}
+    public double odo_x_count_per_cm() {return ODO_X_COUNTS_PER_CM;}
     public DcMotorEx verticalLeftEncoder(){ return verticalLeftEncoder; }
     public DcMotorEx verticalRightEncoder(){ return verticalRightEncoder; }
     public DcMotorEx horizontalEncoder(){ return horizontalEncoder; }
@@ -295,14 +296,14 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
 
     public void configureOdometry(Telemetry telemetry) {
         if (!useOdometry) return;
-        GPS = new OdometryGlobalCoordinatePosition(verticalLeftEncoder(), verticalRightEncoder(), horizontalEncoder(), odo_count_per_inch(), 75, robotVersion);
+        GPS = new OdometryGlobalCoordinatePosition(verticalLeftEncoder(), verticalRightEncoder(), horizontalEncoder(), odo_y_count_per_inch(), 75, robotVersion);
         GPS.set_orientationSensor(orientationSensor);
         // GPS.reverseRightEncoder();
         // GPS.reverseLeftEncoder();
         if (robotVersion==2) {
             // GPS.reverseNormalEncoder();
         }
-        GPS.set_init_pos(init_x_cm*odo_count_per_cm(), init_y_cm*odo_count_per_cm(), init_heading);
+        GPS.set_init_pos(init_x_cm* odo_y_count_per_cm(), init_y_cm* odo_y_count_per_cm(), init_heading);
         setupGPSTelemetry(telemetry);
     }
 
@@ -330,7 +331,7 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
         init_y_cm = y;
         init_heading = heading;
         if (GPS!=null) {
-            GPS.set_init_pos(x*odo_count_per_cm(),y*odo_count_per_cm(),heading);
+            GPS.set_init_pos(x* odo_y_count_per_cm(),y* odo_y_count_per_cm(),heading);
         }
         auto_target_y = init_y_cm;
         auto_target_x = init_x_cm;
@@ -351,22 +352,22 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
 
     public double odo_x_pos_inches() {
         if (GPS ==null) return init_x_cm/2.54;
-        return GPS.returnXCoordinate()/odo_count_per_inch();
+        return GPS.returnXCoordinate()/odo_x_count_per_inch();
     }
 
     public double odo_x_pos_cm() {
         if (GPS ==null) return init_x_cm;
-        return GPS.returnXCoordinate()/odo_count_per_cm();
+        return GPS.returnXCoordinate()/odo_x_count_per_cm();
     }
 
     public double odo_y_pos_inches() {
         if (GPS ==null) return init_y_cm/2.54;
-        return GPS.returnYCoordinate()/odo_count_per_inch();
+        return GPS.returnYCoordinate()/ odo_y_count_per_inch();
     }
 
     public double odo_y_pos_cm() {
         if (GPS ==null) return init_y_cm;
-        return GPS.returnYCoordinate()/odo_count_per_cm();
+        return GPS.returnYCoordinate()/ odo_y_count_per_cm();
     }
 
     public double odo_x_speed_cm() { // horizontal speed as cm/sec
