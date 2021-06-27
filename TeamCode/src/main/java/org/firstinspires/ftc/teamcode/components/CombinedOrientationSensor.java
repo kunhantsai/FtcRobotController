@@ -58,14 +58,18 @@ public class CombinedOrientationSensor extends Logger<CombinedOrientationSensor>
 
         // FIXME: do we have a calibration data file? And is acceleration integration used?
         parameters.calibrationDataFile = "BNO055IMUCalibration.json";
-        parameters.loggingEnabled = this.logLevel < Log.WARN;
+        parameters.loggingEnabled = true;
+                //this.logLevel < Log.WARN;
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
 
         for (Map.Entry<String, BNO055IMU> entry : sensors.entrySet()) {
             if (entry.getKey()=="imu2") {
                 parameters.calibrationDataFile = "BNO055IMU2Calibration.json";
+                parameters.loggingTag = "IMU2";
+            } else{
+                parameters.loggingTag = "IMU";
             }
-            parameters.loggingTag = entry.getKey();
+            //entry.getKey();
             entry.getValue().initialize(parameters);
         }
         for (int i = 0; i < rollLog.length; i++) { //Initialize roll log
