@@ -1584,7 +1584,8 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
             if (Thread.interrupted()) break;
             if (System.currentTimeMillis() - iniTime > timeout_sec*1000) break;
             TaskManager.processTasks();
-            loop++;
+            info("RawRotateTo(): IMU=%3.lf, Odo=%3.lf", orientationSensor.getHeading(), odo_heading());
+           loop++;
         }
         if (Thread.interrupted()) return;
         double end_loop_time = System.currentTimeMillis();
