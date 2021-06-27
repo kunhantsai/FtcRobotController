@@ -22,7 +22,7 @@ import android.util.Log;
  */
 public class Logger<T> {
     protected String logTag = getClass().getSimpleName(); // tag to use for logging
-    protected int logLevel = Log.INFO; // log level to use
+    protected int logLevel = Log.DEBUG; //Log.INFO; // log level to use
 
     /**
      * Configures logging to use given tag and log level
