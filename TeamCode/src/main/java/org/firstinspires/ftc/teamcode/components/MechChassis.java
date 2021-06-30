@@ -296,7 +296,7 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
 
     public void configureOdometry(Telemetry telemetry) {
         if (!useOdometry) return;
-        GPS = new OdometryGlobalCoordinatePosition(verticalLeftEncoder(), verticalRightEncoder(), horizontalEncoder(), odo_y_count_per_inch(), 75, robotVersion);
+        GPS = new OdometryGlobalCoordinatePosition(verticalLeftEncoder(), verticalRightEncoder(), horizontalEncoder(), odo_y_count_per_inch(), 10, robotVersion);
         GPS.set_orientationSensor(orientationSensor);
         // GPS.reverseRightEncoder();
         // GPS.reverseLeftEncoder();
@@ -1471,6 +1471,7 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
             // yield handler
             //TaskManager.processTasks();
             this.core.yield();
+            debug("RawRotateTo(): IMU=%3.1f, Odo=%3.1f", orientationSensor.getHeading(), odo_heading());
         }
         if (Thread.interrupted()) return;
         if (autoDriveMode== AutoDriveMode.STOP_NO_CORRECTION || autoDriveMode== AutoDriveMode.STOP) {
@@ -1584,6 +1585,7 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
             if (Thread.interrupted()) break;
             if (System.currentTimeMillis() - iniTime > timeout_sec*1000) break;
             TaskManager.processTasks();
+            debug("RotateTo(): IMU=%3.1f, Odo=%3.1f", orientationSensor.getHeading(), odo_heading());
             loop++;
         }
         if (Thread.interrupted()) return;
@@ -1617,6 +1619,7 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
         //**************End correction**************
         teleOpDriveMode = TeleOpDriveMode.STOP;
         useScalePower = true;
+        debug("End RotateTo(): IMU=%3.1f, Odo=%3.1f", orientationSensor.getHeading(), odo_heading());
     }
 
 

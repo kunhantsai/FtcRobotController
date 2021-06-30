@@ -58,8 +58,7 @@ public class CombinedOrientationSensor extends Logger<CombinedOrientationSensor>
 
         // FIXME: do we have a calibration data file? And is acceleration integration used?
         parameters.calibrationDataFile = "BNO055IMUCalibration.json";
-        parameters.loggingEnabled = true;
-                //this.logLevel < Log.WARN;
+        parameters.loggingEnabled = this.logLevel < Log.WARN;
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
 
         for (Map.Entry<String, BNO055IMU> entry : sensors.entrySet()) {
