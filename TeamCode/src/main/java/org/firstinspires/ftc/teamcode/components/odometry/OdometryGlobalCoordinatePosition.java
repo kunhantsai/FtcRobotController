@@ -66,7 +66,9 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
 
     public void set_orientationSensor(CombinedOrientationSensor val) {
         orientationSensor = val;
-        prevHeading = orientationSensor.getHeading();
+        if (orientationSensor!=null) {
+            prevHeading = orientationSensor.getHeading();
+        }
         rRotations = lRotations = 0;
     }
 

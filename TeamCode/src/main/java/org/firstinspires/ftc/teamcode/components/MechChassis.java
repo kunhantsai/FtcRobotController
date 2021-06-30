@@ -202,6 +202,8 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
         if (robotVersion == 2) {
             ODO_Y_COUNTS_PER_INCH = 334.6;
             ODO_Y_COUNTS_PER_CM = ODO_Y_COUNTS_PER_INCH / 2.54;
+            ODO_X_COUNTS_PER_INCH = 330.56;
+            ODO_X_COUNTS_PER_CM = ODO_Y_COUNTS_PER_INCH / 2.54;
             ratioFL = 14460.0 / 14503.0;
             ratioFR = 14460.0 / 14710.0;
             ratioBL = 14460.0 / 14756.0;
@@ -1156,9 +1158,13 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
             line.addData("Range", new Func<String>() {
                 @Override
                 public String value() {
-                    return String.format("RF=%2.0f, RB=%2.0f",
-                           // getDistance(SwerveChassis.Direction.RIGHT_FRONT), getDistance(SwerveChassis.Direction.RIGHT_BACK));
-                            rightFrontRangeSensor.getDistance(DistanceUnit.CM),rightBackRangeSensor.getDistance(DistanceUnit.CM));
+                    if (rightFrontRangeSensor!=null && rightFrontRangeSensor!=null) {
+                        return String.format("RF=%2.0f, RB=%2.0f",
+                                // getDistance(SwerveChassis.Direction.RIGHT_FRONT), getDistance(SwerveChassis.Direction.RIGHT_BACK));
+                                rightFrontRangeSensor.getDistance(DistanceUnit.CM), rightBackRangeSensor.getDistance(DistanceUnit.CM));
+                    } else {
+                        return String.format("RF=(N/A), RB=(N/A)");
+                    }
                 }
             });
         }
@@ -1330,7 +1336,6 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
     public double getDistance(SwerveChassis.Direction direction) {
         double dist = 0;
         if (Thread.interrupted()) return dist;
-
         int count = 0;
         DistanceSensor rangeSensor;
 
