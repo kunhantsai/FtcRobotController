@@ -784,6 +784,156 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
         }
     }
 
+    public void driveToPID(double power, double target_x, double target_y, double target_heading, boolean useRotateTo,
+                        boolean headingCorrection, double timeout_sec) throws InterruptedException {
+        if (simulation_mode) { // simulation mode
+            try {
+                dumpEvent (String.format("driveTo: %3.0f, %3.0f, %3.0f\n", target_x, target_y, target_heading));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            set_pos_for_simulation(target_x,target_y,target_heading);
+            return;
+        }
+        long iniTime = System.currentTimeMillis();
+        double current_heading = odo_heading();
+        double cur_x = odo_x_pos_cm(), prev_x = cur_x, init_x=cur_x;
+        double cur_y = odo_y_pos_cm(), prev_y = cur_y, init_y=cur_y;
+        double desiredDegree = Math.toDegrees(Math.atan2(target_x - cur_x, target_y - cur_y));
+        double currentAbsDiff = abs(desiredDegree - current_heading) > 180 ? 360 - abs(desiredDegree - current_heading) : abs(desiredDegree - current_heading);
+        double finalAbsDiff =  abs(target_heading - current_heading) > 180 ? 360 - abs(target_heading - current_heading) : abs(target_heading - current_heading);
+        boolean rotateFirst = true;
+        double stage_one_heading=current_heading;
+        double slowDownPercent = 0.8;
+
+        // if desirableDegree is between current_heading and target_heading, rotate to desirableDegress first
+        // else if target_heading is between current_heading and desirableDegree, rotate to target_heading first
+        if (current_heading>desiredDegree+20 && desiredDegree>=target_heading) {
+            stage_one_heading = desiredDegree + 20;
+        } else if (current_heading<desiredDegree-20 && desiredDegree<=target_heading) {
+            stage_one_heading = desiredDegree - 20;
+        } else if (current_heading>target_heading+20 && target_heading>=desiredDegree) {
+            // rotate to about target_heading
+            stage_one_heading = target_heading + 20;
+        } else if (current_heading<target_heading-20 && target_heading<=desiredDegree) {
+            // rotate to about target_heading
+            stage_one_heading = target_heading - 20;
+        } else {
+            rotateFirst = false;
+        }
+
+        if (useRotateTo && rotateFirst && (stage_one_heading!=current_heading)) {
+            rawRotateTo(power, stage_one_heading, true, timeout_sec);
+            cur_x = odo_x_pos_cm();
+            cur_y = odo_y_pos_cm();
+            desiredDegree = Math.toDegrees(Math.atan2(target_x - cur_x, target_y - cur_y));
+        }
+
+        double error_cm = 2.0;  // to-do: error_cm should depend on degree
+        double powerUsed = (Math.abs(power)<minPower?minPower*Math.signum(power):power);
+        double x_dist = target_x - cur_x;
+        double y_dist = target_y - cur_y;
+        double total_dist = Math.hypot(x_dist,y_dist);
+        double traveledPercent = 0;
+        double save_target_heading = target_heading;
+
+        // Temporarily change target_heading to go straight
+        if (useRotateTo) {
+            target_heading = odo_heading();
+        }
+        double[] motorPowers = {0, 0, 0, 0};
+        // slow down stuff
+        double[] s = getSlowDownParameters(target_heading, getCurHeading(), power);
+        slowDownPercent = s[0];
+        double decreasePercent = s[1];
+        double minPowerForAngle = s[2];
+
+        double init_loop_time = System.currentTimeMillis();
+        int loop_count = 0;
+        double cur_speed;
+        double expectedStopDist;
+        double remDistance;
+        auto_max_calc_speed = 0; prev_x=cur_x; prev_y=cur_y;
+        double prev_time = init_loop_time;
+        double cur_time = prev_time;
+        auto_max_speed = auto_exit_speed = auto_stop_early_dist = 0;
+        while((traveledPercent<.99) && (System.currentTimeMillis() - iniTime < timeout_sec * 1000)) {
+            traveledPercent = Math.hypot(cur_y - init_y, cur_x-init_x)/total_dist;
+            auto_travel_p = traveledPercent;
+            if (traveledPercent>0.99) {
+                auto_exit_speed = odo_speed_cm(); // exiting speed
+                auto_stop_early_dist = 0.01*total_dist;
+                break;
+            }
+            cur_speed = odo_speed_cm();
+            auto_max_speed = Math.max(cur_speed, auto_max_speed);
+            //auto_max_xspeed = Math.max(odo_x_speed_cm(), auto_max_xspeed);
+            //auto_max_yspeed = Math.max(odo_y_speed_cm(), auto_max_yspeed);
+            if (autoDriveMode!= AutoDriveMode.CONTINUE_NO_CORRECTION) {// PID here
+                if (traveledPercent > slowDownPercent && cur_speed > 30 && powerUsed > slowDownSpeed) {
+                    if (power>=0.6) powerUsed = 0.5;
+                    else power = Math.min(0.4, power);
+                }
+            }
+            if (traveledPercent<0.9) {
+                desiredDegree = Math.toDegrees(Math.atan2(target_x - cur_x, target_y - cur_y));
+            }
+            if (Thread.interrupted()) break;
+            if (!TaskManager.isEmpty()) {
+                TaskManager.processTasks();
+            }
+            //move
+            // boolean headingCorrection = true; // Math.abs(desiredDegree) <90;
+            motorPowers = angleMove(desiredDegree, powerUsed, headingCorrection,
+                    (autoDriveMode== AutoDriveMode.CONTINUE_NO_CORRECTION?desiredDegree:target_heading));
+
+           // remDistance = Math.hypot(target_x- cur_x, target_y - cur_y);
+
+            {
+                // over-shoot prevention
+               // expectedStopDist = Math.pow(cur_speed / 152.4, 2) * fixedStopDist;
+               // if ((remDistance - expectedStopDist) < .001) {
+                    // we need to measure fixedStopDist ( overshoot for any speed, then we need to change 20. to that speed
+              //      auto_exit_speed = odo_speed_cm(); // exiting speed
+              //      auto_stop_early_dist = expectedStopDist;
+                //     break;
+              //  }
+            }
+            cur_x = odo_x_pos_cm();
+            cur_y = odo_y_pos_cm();
+            loop_count ++;
+            cur_time = System.currentTimeMillis();
+            if ((cur_time-prev_time)>=100) { // calculate speed every 100 ms
+                double speed = Math.hypot(cur_x-prev_x, cur_y-prev_y)/(cur_time-prev_time)*1000.0;
+                auto_max_calc_speed = Math.max(speed, auto_max_calc_speed);
+                prev_time=cur_time; prev_x=cur_x; prev_y=cur_y;
+            }
+            // info("Odo-y-speed = %3.2f", verticalRightEncoder.getVelocity(AngleUnit.DEGREES));
+        }
+        double end_loop_time = System.currentTimeMillis();
+        if (autoDriveMode== AutoDriveMode.STOP_NO_CORRECTION || autoDriveMode== AutoDriveMode.STOP) {
+            stopNeg(motorPowers);
+        }
+        if (loop_count>0)
+            auto_loop_time = (end_loop_time-init_loop_time)/(double)loop_count;
+
+        target_heading = save_target_heading;
+
+        current_heading = odo_heading();
+        currentAbsDiff = abs(target_heading - current_heading) > 180 ? 360 - abs(target_heading - current_heading) : abs(target_heading - current_heading);
+        if (useRotateTo||(autoDriveMode== AutoDriveMode.STOP) && (currentAbsDiff > 1.2) && !Thread.interrupted()) {
+            rotateTo(Math.abs(power), target_heading, timeout_sec);
+        }
+        if (autoDriveMode== AutoDriveMode.STOP) {
+            // The following code is for error estimation, should be commented out in competition
+            // sleep(200);
+            // auto_dist_err = Math.hypot(odo_x_pos_cm() - target_x, odo_y_pos_cm() - target_y);
+            // auto_degree_err = Math.abs(target_heading - odo_heading());
+            //tl.addData("speed: ", odo_speed_cm());
+            //tl.update();
+        }
+    }
+
     public double getSlowDownPower(double traveledPercent, double slowDownPercent, double decreaseP, double power, double minPowerForAngle){
         double apower = Math.abs(power);
         double pow;
