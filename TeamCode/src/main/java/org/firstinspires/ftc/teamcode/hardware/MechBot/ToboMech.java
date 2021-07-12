@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.hardware.MechBot;
 
+import android.util.Log;
+
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -27,6 +29,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.annotation.Target;
 
+import static android.util.Log.DEBUG;
 import static java.lang.Thread.interrupted;
 import static java.lang.Thread.sleep;
 
@@ -80,7 +83,7 @@ public class ToboMech extends Logger<ToboMech> implements Robot2 {
     public Intake intake;
 
     private double cycleTime = 0; // nano-sec
-    public double auto_chassis_power = 0.3;
+    public double auto_chassis_power = 1.0;
     public double auto_chassis_dist = 270;
     public double auto_chassis_heading = 0;
     public double auto_chassis_power_slow = .4;
@@ -159,6 +162,7 @@ public class ToboMech extends Logger<ToboMech> implements Robot2 {
 
         if (useChassis) {
             chassis = new MechChassis(core).configureLogging("Mecanum", logLevel); // Log.DEBUG
+            // chassis = new MechChassis(core).configureLogging("Mecanum", Log.DEBUG); // Log.DEBUG
             chassis.set_simulation_mode(simulation_mode);
             if (chassis != null) {
                 // chassis.simOS = new FileOutputStream(new File(simEventFile.getParentFile(), simEventFile.getName()));

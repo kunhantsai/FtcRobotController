@@ -202,6 +202,8 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
         if (robotVersion == 2) {
             ODO_Y_COUNTS_PER_INCH = 334.6;
             ODO_Y_COUNTS_PER_CM = ODO_Y_COUNTS_PER_INCH / 2.54;
+            ODO_X_COUNTS_PER_INCH = 330.56;
+            ODO_X_COUNTS_PER_CM = ODO_Y_COUNTS_PER_INCH / 2.54;
             ratioFL = 14460.0 / 14503.0;
             ratioFR = 14460.0 / 14710.0;
             ratioBL = 14460.0 / 14756.0;
@@ -1584,8 +1586,7 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
             if (Thread.interrupted()) break;
             if (System.currentTimeMillis() - iniTime > timeout_sec*1000) break;
             TaskManager.processTasks();
-            info("RawRotateTo(): IMU=%3.lf, Odo=%3.lf", orientationSensor.getHeading(), odo_heading());
-           loop++;
+            loop++;
         }
         if (Thread.interrupted()) return;
         double end_loop_time = System.currentTimeMillis();

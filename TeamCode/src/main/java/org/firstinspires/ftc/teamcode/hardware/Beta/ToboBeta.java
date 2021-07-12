@@ -61,9 +61,9 @@ public class ToboBeta extends Logger<ToboBeta> implements Robot2 {
     public Hopper hopper;
     public Intake intake;
 
-    public double auto_chassis_power = 1.0;
-    public double auto_chassis_dist = 100;
-    public double auto_chassis_heading = -90;
+    public double auto_chassis_power = 0.6;
+    public double auto_chassis_dist = 270;
+    public double auto_chassis_heading = 90;
     public double auto_chassis_power_slow = .4;
     public double auto_chassis_align_power = .22;
     public double shooter_offset = 14; // shooter is 10 cm right of the robot center x coordination
@@ -79,7 +79,7 @@ public class ToboBeta extends Logger<ToboBeta> implements Robot2 {
     public double shooting_rpm = WARM_UP_RPM;
     public double batteryVolt = 0;
 
-    public double auto_rotate_degree = 0;
+    public double auto_rotate_degree = 90;
 
     private boolean simulation_mode = false;
     private boolean useChassis = true;
@@ -832,7 +832,7 @@ public class ToboBeta extends Logger<ToboBeta> implements Robot2 {
     public void testStraight(EventManager em) throws InterruptedException {
         if (chassis == null) return;
         if (chassis != null && chassis.getGPS() == null) {
-            chassis.set_init_pos(120, 155, 0);
+            chassis.set_init_pos(0, 0, 0);
             chassis.configureOdometry(telemetry);
             positionThread = (chassis.getGPS() == null ? null : new Thread(chassis.getGPS()));
             if (positionThread != null) {
@@ -845,7 +845,7 @@ public class ToboBeta extends Logger<ToboBeta> implements Robot2 {
         if (interrupted()) return;
         chassis.auto_target_y = chassis.getInit_y_cm();
         chassis.auto_target_x = chassis.getInit_x_cm();
-        auto_rotate_degree = auto_chassis_heading = chassis.getInit_heading();
+        auto_chassis_heading = chassis.getInit_heading();
 
         telemetry.addLine().addData("(BACK) Y/A B/X", "+/- Power(%.2f) Degree(%.0f)", auto_chassis_power, auto_rotate_degree).setRetained(true);
         telemetry.addLine().addData("(L-Tr) Y/A B/X", "+/- Y(%.2f) X(%.0f)", chassis.auto_target_y, chassis.auto_target_x).setRetained(true);
@@ -873,7 +873,7 @@ public class ToboBeta extends Logger<ToboBeta> implements Robot2 {
                     tZone = ToboMech.TargetZone.ZONE_A;
                     doPowerShots();
                 } else if (!source.isPressed(Button.START)) {
-                    chassis.driveTo(auto_chassis_power, chassis.auto_target_x, chassis.auto_target_y, auto_rotate_degree, false, 5);
+                    chassis.driveTo(auto_chassis_power, chassis.auto_target_x, chassis.auto_target_y, auto_rotate_degree, false, 10);
                 }
             }
         }, new Button[]{Button.Y});
@@ -887,7 +887,7 @@ public class ToboBeta extends Logger<ToboBeta> implements Robot2 {
                 } else if (source.getTrigger(Events.Side.LEFT) > 0.5) {
                     chassis.auto_target_y -= 10;
                 } else if (!source.isPressed(Button.START)) {
-                    chassis.driveStraight(auto_chassis_power, auto_chassis_dist, auto_rotate_degree, 5);
+                    chassis.driveStraight(auto_chassis_power, auto_chassis_dist, auto_rotate_degree, 10);
                 }
             }
         }, new Button[]{Button.A});
@@ -899,7 +899,7 @@ public class ToboBeta extends Logger<ToboBeta> implements Robot2 {
                 } else if (source.getTrigger(Events.Side.LEFT) > 0.5) {
                     chassis.auto_target_x -= 10;
                 } else if (!source.isPressed(Button.START)) {
-                    chassis.driveStraight(auto_chassis_power, 1000, auto_rotate_degree, 3);
+                    chassis.driveStraight(auto_chassis_power, 1000, auto_rotate_degree, 10);
                 }
             }
         }, new Button[]{Button.X});
@@ -911,7 +911,7 @@ public class ToboBeta extends Logger<ToboBeta> implements Robot2 {
                 } else if (source.getTrigger(Events.Side.LEFT) > 0.5) {
                     chassis.auto_target_x += 5;
                 } else if (!source.isPressed(Button.START)) {
-                    chassis.rotateTo(auto_chassis_power, auto_rotate_degree, 5);
+                    chassis.rotateTo(auto_chassis_power, auto_rotate_degree, 10);
                 }
             }
         }, new Button[]{Button.B});
@@ -1091,7 +1091,7 @@ public class ToboBeta extends Logger<ToboBeta> implements Robot2 {
                         chassis.initOdoFromJson();
                     } else {
                         // chassis.set_init_pos(side(120), 155, 0);
-                        chassis.set_init_pos(side(58), 23, 0);
+                        chassis.set_init_pos(side(0), 0, 0);
                     }
                 }
                 break;
