@@ -758,6 +758,7 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
                 auto_max_calc_speed = Math.max(speed, auto_max_calc_speed);
                 prev_time=cur_time; prev_x=cur_x; prev_y=cur_y;
             }
+            debug("DriveTo(): speed(max)=%3.1f (%3.1f), acc(min, max)=%3.1f (%3.1f, %3.1f)", GPS.getCurSpeed(), GPS.getMaxSpeed(), GPS.getCurAcc(), GPS.getMinAcc(), GPS.getMaxAcc());
             // info("Odo-y-speed = %3.2f", verticalRightEncoder.getVelocity(AngleUnit.DEGREES));
         }
         double end_loop_time = System.currentTimeMillis();

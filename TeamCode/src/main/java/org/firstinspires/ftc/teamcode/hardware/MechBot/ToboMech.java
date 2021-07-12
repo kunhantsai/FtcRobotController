@@ -83,7 +83,7 @@ public class ToboMech extends Logger<ToboMech> implements Robot2 {
     public Intake intake;
 
     private double cycleTime = 0; // nano-sec
-    public double auto_chassis_power = 0.3;
+    public double auto_chassis_power = 1.0;
     public double auto_chassis_dist = 270;
     public double auto_chassis_heading = 0;
     public double auto_chassis_power_slow = .4;

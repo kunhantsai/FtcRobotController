@@ -25,6 +25,11 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
     double verticalRightEncoderWheelPosition = 0, verticalLeftEncoderWheelPosition = 0, normalEncoderWheelPosition = 0,  changeInRobotOrientation = 0;
     private double robotGlobalXCoordinatePosition = 0, robotGlobalYCoordinatePosition = 0, robotOrientationRadians = 0;
     private double xSpeedDegree = 0, ySpeedDegree = 0;
+    private double curSpeed = 0, prevSpeed = 0;
+    private double curTime = 0, prevTime = 0;
+    private double maxSpeed = 0;
+    private double curAcc = 0;
+    private double maxAcc = 0, minAcc = 0;
     private double xSpeedLogs[] = {0,0,0,0,0};
     private double ySpeedLogs[] = {0,0,0,0,0};
     private int count=0;
@@ -58,6 +63,12 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
 
     public double getlRotations() { return lRotations; }
     public double getrRotations() { return rRotations; }
+    public double getCurSpeed() { return curSpeed; }
+    public double getMaxSpeed() { return maxSpeed; }
+    public double getCurAcc() { return curAcc; }
+    public double getMinAcc() { return minAcc; }
+    public double getMaxAcc() { return maxAcc; }
+
 
     public double rotationCorrection() { // degrees to be corrected due to rotation error
         return (getrRotations() * 1.45 + getlRotations() * 1.1) / 360.0;
@@ -104,6 +115,17 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
      * Updates the global (x, y, theta) coordinate position of the robot using the odometry encoders
      */
     private void globalCoordinatePositionUpdate(){
+        curSpeed = Math.hypot((Math.abs(verticalEncoderLeft.getVelocity(AngleUnit.DEGREES)) + Math.abs(verticalEncoderRight.getVelocity(AngleUnit.DEGREES)))/2.0,
+                horizontalEncoder.getVelocity(AngleUnit.DEGREES));
+        curTime = System.currentTimeMillis();
+        if (curTime-prevTime!=0)
+           curAcc = (curSpeed-prevSpeed)/(curTime-prevTime);
+        if (curSpeed>maxSpeed)
+            maxSpeed = curSpeed;
+        if (curAcc>maxAcc)
+            maxAcc = curAcc;
+        if (curAcc<minAcc)
+            minAcc = curAcc;
         //Get Current Positions
         verticalLeftEncoderWheelPosition = (verticalEncoderLeft.getCurrentPosition()* verticalLeftEncoderPositionMultiplier);
         verticalRightEncoderWheelPosition = (verticalEncoderRight.getCurrentPosition() * verticalRightEncoderPositionMultiplier);
@@ -152,7 +174,6 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
         previousVerticalLeftEncoderWheelPosition = verticalLeftEncoderWheelPosition;
         previousVerticalRightEncoderWheelPosition = verticalRightEncoderWheelPosition;
         prevNormalEncoderWheelPosition = normalEncoderWheelPosition;
-
         ySpeedLogs[(count%5)]=(Math.abs(verticalEncoderLeft.getVelocity(AngleUnit.DEGREES)) + Math.abs(verticalEncoderRight.getVelocity(AngleUnit.DEGREES))) / 2;
         xSpeedLogs[(count%5)]=Math.abs(horizontalEncoder.getVelocity(AngleUnit.DEGREES));
         if (count > 4) {
@@ -163,6 +184,9 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
 //            }
         }
 
+
+        prevTime = curTime;
+        prevSpeed = curSpeed;
         count = (count+1)%10000;
 
     }
