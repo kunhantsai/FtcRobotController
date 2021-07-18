@@ -610,6 +610,19 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
 
         driveTo(power, target_x, target_y, fixed_heading, false, timeout_sec);
     }
+    public void driveStraightPID(double power, double cm, double degree, long timeout_sec) throws InterruptedException{
+        double x_dist = cm * Math.sin(Math.toRadians(degree)) * Math.signum(power);
+        double y_dist = cm * Math.cos(Math.toRadians(degree)) * Math.signum(power);
+        double target_x = x_dist + odo_x_pos_cm();
+        double target_y = y_dist + odo_y_pos_cm();
+        auto_target_x = target_x;
+        auto_target_y = target_y;
+
+        power = power * Math.signum(cm);
+        double fixed_heading = odo_heading();
+
+        driveToPID(power, target_x, target_y, fixed_heading, false, false, timeout_sec);
+    }
 
 
     public void driveThrough(double power, Point[] points, boolean useRotateTo,double timeout_sec) throws InterruptedException {
@@ -856,10 +869,17 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
         auto_max_calc_speed = 0; prev_x=cur_x; prev_y=cur_y;
         double prev_time = init_loop_time;
         double cur_time = prev_time;
+        double PID_current_error = 0;
+        double PID_previous_error = 0;
+        double PID_output;
         auto_max_speed = auto_exit_speed = auto_stop_early_dist = 0;
+        double pk = 0.2; // PID constants
+        double ik = 0;
+        double dk = 0;
         while((traveledPercent<.99) && (System.currentTimeMillis() - iniTime < timeout_sec * 1000)) {
             traveledPercent = Math.hypot(cur_y - init_y, cur_x-init_x)/total_dist;
             auto_travel_p = traveledPercent;
+            PID_current_error = 1-traveledPercent;
             if (traveledPercent>0.99) {
                 auto_exit_speed = odo_speed_cm(); // exiting speed
                 auto_stop_early_dist = 0.01*total_dist;
@@ -870,12 +890,27 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
             //auto_max_xspeed = Math.max(odo_x_speed_cm(), auto_max_xspeed);
             //auto_max_yspeed = Math.max(odo_y_speed_cm(), auto_max_yspeed);
             if (autoDriveMode!= AutoDriveMode.CONTINUE_NO_CORRECTION) {// PID here
-                if (traveledPercent > slowDownPercent && cur_speed > 30 && powerUsed > slowDownSpeed) {
-                    if (power>=0.6) powerUsed = 0.5;
-                    else power = Math.min(0.4, power);
-                }
+//                if (traveledPercent > slowDownPercent && cur_speed > 30 && powerUsed > slowDownSpeed) {
+//                    if (power>=0.6) powerUsed = 0.5;
+//                    else power = Math.min(0.4, power);
+//                }
+//            }
             }
-            if (traveledPercent<0.9) {
+            //update time
+            prev_time=cur_time;
+            cur_time = System.currentTimeMillis();
+
+            remDistance = Math.hypot(target_x- cur_x, target_y - cur_y);
+            PID_output = pk*PID_current_error+ik*PID_current_error*(cur_time-prev_time)+dk*(PID_previous_error-PID_current_error)/(cur_time-prev_time);
+           debug("PID_output=3.2f", PID_output); //2 other varibales?
+
+            //find powerUsed based on PID error
+                if(traveledPercent<0.7||remDistance>20||PID_output >1){
+                    powerUsed = power;
+                } else{
+                    powerUsed = power*PID_output;
+                }
+                if (traveledPercent<0.9) {
                 desiredDegree = Math.toDegrees(Math.atan2(target_x - cur_x, target_y - cur_y));
             }
             if (Thread.interrupted()) break;
@@ -887,7 +922,7 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
             motorPowers = angleMove(desiredDegree, powerUsed, headingCorrection,
                     (autoDriveMode== AutoDriveMode.CONTINUE_NO_CORRECTION?desiredDegree:target_heading));
 
-           // remDistance = Math.hypot(target_x- cur_x, target_y - cur_y);
+
 
             {
                 // over-shoot prevention
@@ -902,12 +937,6 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
             cur_x = odo_x_pos_cm();
             cur_y = odo_y_pos_cm();
             loop_count ++;
-            cur_time = System.currentTimeMillis();
-            if ((cur_time-prev_time)>=100) { // calculate speed every 100 ms
-                double speed = Math.hypot(cur_x-prev_x, cur_y-prev_y)/(cur_time-prev_time)*1000.0;
-                auto_max_calc_speed = Math.max(speed, auto_max_calc_speed);
-                prev_time=cur_time; prev_x=cur_x; prev_y=cur_y;
-            }
             // info("Odo-y-speed = %3.2f", verticalRightEncoder.getVelocity(AngleUnit.DEGREES));
         }
         double end_loop_time = System.currentTimeMillis();

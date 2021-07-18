@@ -1020,7 +1020,7 @@ public class ToboMech extends Logger<ToboMech> implements Robot2 {
                 } else if (source.getTrigger(Events.Side.LEFT) > 0.5) {
                     chassis.auto_target_y -= 10;
                 } else if (!source.isPressed(Button.START)) {
-                    chassis.driveStraight(auto_chassis_power, auto_chassis_dist, auto_rotate_degree, 10);
+                    chassis.driveStraightPID(auto_chassis_power, auto_chassis_dist, auto_rotate_degree, 10);
                 }
             }
         }, new Button[]{Button.A});
