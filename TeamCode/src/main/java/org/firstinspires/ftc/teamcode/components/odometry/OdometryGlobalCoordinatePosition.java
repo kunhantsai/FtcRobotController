@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.components.odometry;
 
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ReadWriteFile;
 
@@ -34,7 +33,8 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
     private double ySpeedLogs[] = {0,0,0,0,0};
     private int count=0;
     private double previousVerticalRightEncoderWheelPosition = 0, previousVerticalLeftEncoderWheelPosition = 0, prevNormalEncoderWheelPosition = 0;
-    private double DEFAULT_COUNTS_PER_INCH = 307.7; // 303.71; //307.699557;
+    private double Y_COUNTS_PER_INCH = 307.7; // should be synchronized with MechChassis.java
+    private double X_COUNTS_PER_INCH = 305.6; // should be synchronized with MechChassis.java
     // private double netRotations; // clockwise rotations in degrees
     private double rRotations; // clockwise rotations in degrees
     private double lRotations; // counter-clockwise rotations in degrees
@@ -42,10 +42,10 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
 
 
     //Algorithm constants
-    //private double robotEncoderWheelDistance = 15.20435 * DEFAULT_COUNTS_PER_INCH;
-    // private double robotEncoderWheelDistance = 15.4317822 * DEFAULT_COUNTS_PER_INCH;
+    //private double robotEncoderWheelDistance = 15.20435 * Y_COUNTS_PER_INCH;
+    // private double robotEncoderWheelDistance = 15.4317822 * Y_COUNTS_PER_INCH;
     // private double horizontalEncoderTickPerDegreeOffset = -86.84834;
-    private double robotEncoderWheelDistance = 14.5 * DEFAULT_COUNTS_PER_INCH;
+    private double robotEncoderWheelDistance = 14.5 * Y_COUNTS_PER_INCH;
     private double horizontalEncoderTickPerDegreeOffset = 84.26;
 
     //Sleep time interval (milliseconds) for the position update thread
@@ -60,7 +60,10 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
     private double normalEncoderPositionMultiplier = 1;
     private int GPSVersion = 1; // version 1 - Wizard Odometry
                                 // version 2 - Beta Odometry
-
+    public void set_counts_per_inch(double x, double y) {
+        X_COUNTS_PER_INCH = x;
+        Y_COUNTS_PER_INCH = y;
+    }
     public double getlRotations() { return lRotations; }
     public double getrRotations() { return rRotations; }
     public double getCurSpeed() { return curSpeed; }
@@ -90,7 +93,7 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
      * @param horizontalEncoder horizontal odometry encoder, perpendicular to the other two odometry encoder wheels
      * @param threadSleepDelay delay in milliseconds for the GlobalPositionUpdate thread (50-75 milliseconds is suggested)
      */
-    public OdometryGlobalCoordinatePosition(DcMotorEx verticalEncoderLeft, DcMotorEx verticalEncoderRight, DcMotorEx horizontalEncoder, double COUNTS_PER_INCH, int threadSleepDelay, int version){
+    public OdometryGlobalCoordinatePosition(DcMotorEx verticalEncoderLeft, DcMotorEx verticalEncoderRight, DcMotorEx horizontalEncoder, int threadSleepDelay, int version){
         this.verticalEncoderLeft = verticalEncoderLeft;
         this.verticalEncoderRight = verticalEncoderRight;
         this.horizontalEncoder = horizontalEncoder;
@@ -104,8 +107,9 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
             this.horizontalEncoderTickPerDegreeOffset = Double.parseDouble(ReadWriteFile.readFile(horizontalTickOffsetFile).trim());
         }
         if(GPSVersion == 2) {
-            DEFAULT_COUNTS_PER_INCH = 334.6;
-            robotEncoderWheelDistance = 14.75 * DEFAULT_COUNTS_PER_INCH;
+            Y_COUNTS_PER_INCH = 334.6;
+            X_COUNTS_PER_INCH = 330.56;
+            robotEncoderWheelDistance = 14.75 * Y_COUNTS_PER_INCH;
             horizontalEncoderTickPerDegreeOffset = 60;
             useIMU=false;
         }
@@ -239,7 +243,7 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
 //        initRadians = robotOrientationRadians;
 //        verticalRightEncoderWheelPosition = verticalLeftEncoderWheelPosition = normalEncoderWheelPosition = changeInRobotOrientation = 0;
 //        previousVerticalRightEncoderWheelPosition = previousVerticalLeftEncoderWheelPosition = prevNormalEncoderWheelPosition = 0;
-        robotGlobalXCoordinatePosition = x_cm * DEFAULT_COUNTS_PER_INCH / 2.54;
+        robotGlobalXCoordinatePosition = x_cm * X_COUNTS_PER_INCH / 2.54;
     }
 
     public void set_y_pos(double y) {

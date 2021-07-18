@@ -298,13 +298,14 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
 
     public void configureOdometry(Telemetry telemetry) {
         if (!useOdometry) return;
-        GPS = new OdometryGlobalCoordinatePosition(verticalLeftEncoder(), verticalRightEncoder(), horizontalEncoder(), odo_y_count_per_inch(), 75, robotVersion);
+        GPS = new OdometryGlobalCoordinatePosition(verticalLeftEncoder(), verticalRightEncoder(), horizontalEncoder(), 10, robotVersion);
         GPS.set_orientationSensor(orientationSensor);
         // GPS.reverseRightEncoder();
         // GPS.reverseLeftEncoder();
         if (robotVersion==2) {
             // GPS.reverseNormalEncoder();
         }
+        GPS.set_counts_per_inch(ODO_X_COUNTS_PER_INCH, ODO_Y_COUNTS_PER_INCH);
         GPS.set_init_pos(init_x_cm* odo_y_count_per_cm(), init_y_cm* odo_y_count_per_cm(), init_heading);
         setupGPSTelemetry(telemetry);
     }
