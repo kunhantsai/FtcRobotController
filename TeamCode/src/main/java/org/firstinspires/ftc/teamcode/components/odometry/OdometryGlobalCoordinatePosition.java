@@ -45,7 +45,7 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
     //private double robotEncoderWheelDistance = 15.20435 * Y_COUNTS_PER_INCH;
     // private double robotEncoderWheelDistance = 15.4317822 * Y_COUNTS_PER_INCH;
     // private double horizontalEncoderTickPerDegreeOffset = -86.84834;
-    private double robotEncoderWheelDistance = 14.5 * Y_COUNTS_PER_INCH;
+    private double robotEncoderWheelDistance = 14.4029305562 * Y_COUNTS_PER_INCH;
     private double horizontalEncoderTickPerDegreeOffset = 84.26;
 
     //Sleep time interval (milliseconds) for the position update thread
@@ -55,7 +55,7 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
     private File wheelBaseSeparationFile = AppUtil.getInstance().getSettingsFile("wheelBaseSeparation.txt");
     private File horizontalTickOffsetFile = AppUtil.getInstance().getSettingsFile("horizontalTickOffset.txt");
 
-    private double verticalLeftEncoderPositionMultiplier = 1;  // 0.8680555556;;
+    private double verticalLeftEncoderPositionMultiplier = 0.997612383;  // 0.8680555556;;
     private double verticalRightEncoderPositionMultiplier = 1; // 1.152;
     private double normalEncoderPositionMultiplier = 1;
     private int GPSVersion = 1; // version 1 - Wizard Odometry
@@ -109,7 +109,7 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
         if(GPSVersion == 2) {
             Y_COUNTS_PER_INCH = 334.6;
             X_COUNTS_PER_INCH = 330.56;
-            verticalRightEncoderPositionMultiplier = 1.0;
+            verticalLeftEncoderPositionMultiplier = 1.0;
             verticalRightEncoderPositionMultiplier = 0.999443;
             robotEncoderWheelDistance = 14.39892 * Y_COUNTS_PER_INCH;
             horizontalEncoderTickPerDegreeOffset = 60;
@@ -265,19 +265,11 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
     public void stop(){ isRunning = false; }
 
     public void reverseLeftEncoder(){
-        if(verticalLeftEncoderPositionMultiplier == 1){
-            verticalLeftEncoderPositionMultiplier = -1;
-        }else{
-            verticalLeftEncoderPositionMultiplier = 1;
-        }
+        verticalLeftEncoderPositionMultiplier *= -1;
     }
 
     public void reverseRightEncoder(){
-        if(verticalRightEncoderPositionMultiplier == 1){
-            verticalRightEncoderPositionMultiplier = -1;
-        }else{
-            verticalRightEncoderPositionMultiplier = 1;
-        }
+        verticalRightEncoderPositionMultiplier *= -1;
     }
 
     public void reverseNormalEncoder(){
