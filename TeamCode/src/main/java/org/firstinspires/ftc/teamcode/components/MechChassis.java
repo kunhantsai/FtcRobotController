@@ -298,7 +298,7 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
 
     public void configureOdometry(Telemetry telemetry) {
         if (!useOdometry) return;
-        GPS = new OdometryGlobalCoordinatePosition(verticalLeftEncoder(), verticalRightEncoder(), horizontalEncoder(), 10, robotVersion);
+        GPS = new OdometryGlobalCoordinatePosition(verticalLeftEncoder(), verticalRightEncoder(), horizontalEncoder(), 1, robotVersion);
         GPS.set_orientationSensor(orientationSensor);
         // GPS.reverseRightEncoder();
         // GPS.reverseLeftEncoder();
@@ -385,7 +385,8 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
 
     public double odo_speed_cm() {
        double speed = 0;
-       speed = Math.hypot(odo_x_speed_cm(), odo_y_speed_cm());
+       // speed = Math.hypot(odo_x_speed_cm(), odo_y_speed_cm());
+        speed = GPS.getCurSpeed() / 360.0 * WHEEL_CM_PER_ROTATION;
        return speed;
     }
 
@@ -622,7 +623,7 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
         power = power * Math.signum(cm);
         double fixed_heading = odo_heading();
 
-        driveToPID(power, target_x, target_y, fixed_heading, false, false, timeout_sec);
+        driveToPID(power, target_x, target_y, fixed_heading, false, true, timeout_sec);
     }
 
 
@@ -661,6 +662,7 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
             set_pos_for_simulation(target_x,target_y,target_heading);
             return;
         }
+        debug("driveTo(): pwr=%.3f, (x, y)=(%.1f, %1f),Heading=%.1f)", power, target_x, target_y, target_heading);
         long iniTime = System.currentTimeMillis();
         double current_heading = odo_heading();
         double cur_x = odo_x_pos_cm(), prev_x = cur_x, init_x=cur_x;
@@ -809,6 +811,7 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
             set_pos_for_simulation(target_x,target_y,target_heading);
             return;
         }
+        debug("driveToPID(): pwr=%.3f, (x, y)=(%.1f, %1f),Heading=%.1f)", power, target_x, target_y, target_heading);
         long iniTime = System.currentTimeMillis();
         double current_heading = odo_heading();
         double cur_x = odo_x_pos_cm(), prev_x = cur_x, init_x=cur_x;
@@ -869,24 +872,30 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
         double remDistance;
         auto_max_calc_speed = 0; prev_x=cur_x; prev_y=cur_y;
         double prev_time = init_loop_time;
-        double cur_time = prev_time;
+        double cur_time = System.currentTimeMillis();
         double PID_current_error = 0;
         double PID_previous_error = 0;
-        double PID_output;
+        double PID_output = 0;
         auto_max_speed = auto_exit_speed = auto_stop_early_dist = 0;
-        double pk = 0.2; // PID constants
-        double ik = 0;
-        double dk = 0;
-        while((traveledPercent<.99) && (System.currentTimeMillis() - iniTime < timeout_sec * 1000)) {
+        double pk = 0.9; // PID constants
+        double ik = 0.1;
+        double dk = 0.1;
+        double stop_dist = 3;
+        while((traveledPercent<.995) && (System.currentTimeMillis() - iniTime < timeout_sec * 1000)) {
             traveledPercent = Math.hypot(cur_y - init_y, cur_x-init_x)/total_dist;
+            remDistance = Math.hypot(target_x- cur_x, target_y - cur_y);
             auto_travel_p = traveledPercent;
             PID_current_error = 1-traveledPercent;
-            if (traveledPercent>0.99) {
+            cur_speed = odo_speed_cm();
+            stop_dist = 3;
+            if (cur_speed>20.0) {
+                stop_dist += .1 * Math.pow(cur_speed-20.0, 1.3);
+            }
+            if (traveledPercent>0.995 || (remDistance<stop_dist&&total_dist>=20&&power>=0.5)) {
                 auto_exit_speed = odo_speed_cm(); // exiting speed
-                auto_stop_early_dist = 0.01*total_dist;
+                auto_stop_early_dist = stop_dist;
                 break;
             }
-            cur_speed = odo_speed_cm();
             auto_max_speed = Math.max(cur_speed, auto_max_speed);
             //auto_max_xspeed = Math.max(odo_x_speed_cm(), auto_max_xspeed);
             //auto_max_yspeed = Math.max(odo_y_speed_cm(), auto_max_yspeed);
@@ -898,22 +907,22 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
 //            }
             }
             //update time
-            prev_time=cur_time;
             cur_time = System.currentTimeMillis();
-
-            remDistance = Math.hypot(target_x- cur_x, target_y - cur_y);
-            PID_output = pk*PID_current_error+ik*PID_current_error*(cur_time-prev_time)+dk*(PID_previous_error-PID_current_error)/(cur_time-prev_time);
-           debug("PID_output=3.2f", PID_output); //2 other varibales?
+            if (cur_time-prev_time>0)
+                PID_output = pk*PID_current_error+ik*PID_current_error*(cur_time-prev_time)+dk*(PID_previous_error-PID_current_error)/(cur_time-prev_time);
+            prev_time=cur_time;
 
             //find powerUsed based on PID error
-                if(traveledPercent<0.7||remDistance>20||PID_output >1){
+                if(traveledPercent<0.5||remDistance>60||PID_output >1){
                     powerUsed = power;
                 } else{
                     powerUsed = power*PID_output;
+                    if (powerUsed<0.2) powerUsed=0.2;
                 }
                 if (traveledPercent<0.9) {
                 desiredDegree = Math.toDegrees(Math.atan2(target_x - cur_x, target_y - cur_y));
             }
+            debug("PID_ouput=%3.2f,pw=%.2f, (x,y,sp)= (%.3f,%.3f,%.1f), (PK,IK,DK)=(%.2f,%.2f,%.2f)", PID_output, powerUsed, cur_x, cur_y, odo_speed_cm(),pk,ik,dk);
             if (Thread.interrupted()) break;
             if (!TaskManager.isEmpty()) {
                 TaskManager.processTasks();
@@ -923,18 +932,6 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
             motorPowers = angleMove(desiredDegree, powerUsed, headingCorrection,
                     (autoDriveMode== AutoDriveMode.CONTINUE_NO_CORRECTION?desiredDegree:target_heading));
 
-
-
-            {
-                // over-shoot prevention
-               // expectedStopDist = Math.pow(cur_speed / 152.4, 2) * fixedStopDist;
-               // if ((remDistance - expectedStopDist) < .001) {
-                    // we need to measure fixedStopDist ( overshoot for any speed, then we need to change 20. to that speed
-              //      auto_exit_speed = odo_speed_cm(); // exiting speed
-              //      auto_stop_early_dist = expectedStopDist;
-                //     break;
-              //  }
-            }
             cur_x = odo_x_pos_cm();
             cur_y = odo_y_pos_cm();
             loop_count ++;
@@ -951,7 +948,7 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
 
         current_heading = odo_heading();
         currentAbsDiff = abs(target_heading - current_heading) > 180 ? 360 - abs(target_heading - current_heading) : abs(target_heading - current_heading);
-        if (useRotateTo||(autoDriveMode== AutoDriveMode.STOP) && (currentAbsDiff > 1.2) && !Thread.interrupted()) {
+        if (useRotateTo||(autoDriveMode== AutoDriveMode.STOP) && (currentAbsDiff > 2) && !Thread.interrupted()) {
             rotateTo(Math.abs(power), target_heading, timeout_sec);
         }
         if (autoDriveMode== AutoDriveMode.STOP) {
@@ -1276,6 +1273,7 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
         motorFR.setPower(0);
         motorBL.setPower(0);
         motorBR.setPower(0);
+        debug("stop(): (x,y)= (%.3f,%.3f)", odo_x_pos_cm(), odo_y_pos_cm());
     }
     public void stopNeg(double[] motorPowers) throws InterruptedException {
         if (simulation_mode) return;
@@ -1286,6 +1284,7 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
         motorBR.setPower(-Math.signum(motorPowers[3] * .01));
         sleep((int)(100*speed/150));
         stop();
+        debug("stopNeg(): pw=%.2f, (x,y)= (%.3f,%.3f)", motorPowers[0], odo_x_pos_cm(), odo_y_pos_cm());
     }
 
     public void reset() {

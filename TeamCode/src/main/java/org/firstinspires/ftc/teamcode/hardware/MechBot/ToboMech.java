@@ -83,7 +83,7 @@ public class ToboMech extends Logger<ToboMech> implements Robot2 {
     public Intake intake;
 
     private double cycleTime = 0; // nano-sec
-    public double auto_chassis_power = 1.0;
+    public double auto_chassis_power = .6;
     public double auto_chassis_dist = 270;
     public double auto_chassis_heading = 0;
     public double auto_chassis_power_slow = .4;
@@ -104,7 +104,7 @@ public class ToboMech extends Logger<ToboMech> implements Robot2 {
     public double shooting_rpm = WARM_UP_RPM;
     public double batteryVolt = 0;
 
-    public double auto_rotate_degree = 90;
+    public double auto_rotate_degree = 0;
 
     private boolean simulation_mode = false;
     private boolean useChassis = true;
@@ -161,8 +161,8 @@ public class ToboMech extends Logger<ToboMech> implements Robot2 {
         info("RoboMech configure() after new CoreSystem()(run time = %.2f sec)", (runtime.seconds() - ini_time));
 
         if (useChassis) {
-            chassis = new MechChassis(core).configureLogging("Mecanum", logLevel); // Log.DEBUG
-            // chassis = new MechChassis(core).configureLogging("Mecanum", Log.DEBUG); // Log.DEBUG
+            // chassis = new MechChassis(core).configureLogging("Mecanum", logLevel); // Log.DEBUG
+            chassis = new MechChassis(core).configureLogging("Mecanum", Log.DEBUG); // Log.DEBUG
             chassis.set_simulation_mode(simulation_mode);
             if (chassis != null) {
                 // chassis.simOS = new FileOutputStream(new File(simEventFile.getParentFile(), simEventFile.getName()));
@@ -1019,6 +1019,8 @@ public class ToboMech extends Logger<ToboMech> implements Robot2 {
                     if (auto_chassis_power < 0.1) auto_chassis_power = 0.1;
                 } else if (source.getTrigger(Events.Side.LEFT) > 0.5) {
                     chassis.auto_target_y -= 10;
+                } else if (source.isPressed(Button.LEFT_BUMPER)) {
+                    chassis.driveStraight(auto_chassis_power, auto_chassis_dist, auto_rotate_degree, 10);
                 } else if (!source.isPressed(Button.START)) {
                     chassis.driveStraightPID(auto_chassis_power, auto_chassis_dist, auto_rotate_degree, 10);
                 }
