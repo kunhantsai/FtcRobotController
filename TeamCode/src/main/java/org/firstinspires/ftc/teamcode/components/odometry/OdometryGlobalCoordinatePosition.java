@@ -109,7 +109,9 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
         if(GPSVersion == 2) {
             Y_COUNTS_PER_INCH = 334.6;
             X_COUNTS_PER_INCH = 330.56;
-            robotEncoderWheelDistance = 14.75 * Y_COUNTS_PER_INCH;
+            verticalRightEncoderPositionMultiplier = 1.0;
+            verticalRightEncoderPositionMultiplier = 0.999443;
+            robotEncoderWheelDistance = 14.39892 * Y_COUNTS_PER_INCH;
             horizontalEncoderTickPerDegreeOffset = 60;
             useIMU=false;
         }
