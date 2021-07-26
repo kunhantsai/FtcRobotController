@@ -389,7 +389,11 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
         speed = GPS.getCurSpeed() / 360.0 * WHEEL_CM_PER_ROTATION;
        return speed;
     }
-
+    public double odo_ave_last5_speed_cm() {
+        double speed = 0;
+        speed = GPS.getAveLast5Speed() / 360.0 * WHEEL_CM_PER_ROTATION;
+        return speed;
+    }
     public double odo_heading() {
         return odo_heading(false); // return uncorrected heading
     }
@@ -878,18 +882,19 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
         double PID_output = 0;
         auto_max_speed = auto_exit_speed = auto_stop_early_dist = 0;
         double pk = 0.9; // PID constants
-        double ik = 0.1;
-        double dk = 0.1;
+        double ik = 0.0;
+        double dk = 0.0;
         double stop_dist = 3;
         while((traveledPercent<.995) && (System.currentTimeMillis() - iniTime < timeout_sec * 1000)) {
             traveledPercent = Math.hypot(cur_y - init_y, cur_x-init_x)/total_dist;
             remDistance = Math.hypot(target_x- cur_x, target_y - cur_y);
             auto_travel_p = traveledPercent;
             PID_current_error = 1-traveledPercent;
-            cur_speed = odo_speed_cm();
+            cur_speed = odo_ave_last5_speed_cm();
             stop_dist = 3;
-            if (cur_speed>20.0) {
-                stop_dist += .1 * Math.pow(cur_speed-20.0, 1.3);
+            if (remDistance<50) {
+                // stop_dist += .0044824 * Math.pow(cur_speed, 2);
+                stop_dist += .0041562 * Math.pow(cur_speed, 2);
             }
             if (traveledPercent>0.995 || (remDistance<stop_dist&&total_dist>=20&&power>=0.5)) {
                 auto_exit_speed = odo_speed_cm(); // exiting speed
@@ -922,7 +927,7 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
                 if (traveledPercent<0.9) {
                 desiredDegree = Math.toDegrees(Math.atan2(target_x - cur_x, target_y - cur_y));
             }
-            debug("PID_ouput=%3.2f,pw=%.2f, (x,y,sp)= (%.3f,%.3f,%.1f), (PK,IK,DK)=(%.2f,%.2f,%.2f)", PID_output, powerUsed, cur_x, cur_y, odo_speed_cm(),pk,ik,dk);
+            debug("PID_ouput=%3.2f,pw=%.2f, (x,y,sp)= (%.3f,%.3f,%.1f), (PK,IK,DK)=(%.2f,%.2f,%.2f)", PID_output, powerUsed, cur_x, cur_y, odo_ave_last5_speed_cm(),pk,ik,dk);
             if (Thread.interrupted()) break;
             if (!TaskManager.isEmpty()) {
                 TaskManager.processTasks();
@@ -948,9 +953,9 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
 
         current_heading = odo_heading();
         currentAbsDiff = abs(target_heading - current_heading) > 180 ? 360 - abs(target_heading - current_heading) : abs(target_heading - current_heading);
-        if (useRotateTo||(autoDriveMode== AutoDriveMode.STOP) && (currentAbsDiff > 2) && !Thread.interrupted()) {
-            rotateTo(Math.abs(power), target_heading, timeout_sec);
-        }
+//        if (useRotateTo||(autoDriveMode== AutoDriveMode.STOP) && (currentAbsDiff > 2) && !Thread.interrupted()) {
+//            rotateTo(Math.abs(power), target_heading, timeout_sec);
+//        }
         if (autoDriveMode== AutoDriveMode.STOP) {
             // The following code is for error estimation, should be commented out in competition
             // sleep(200);

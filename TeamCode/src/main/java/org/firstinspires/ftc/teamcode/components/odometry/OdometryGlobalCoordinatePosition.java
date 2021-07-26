@@ -31,6 +31,7 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
     private double maxAcc = 0, minAcc = 0;
     private double xSpeedLogs[] = {0,0,0,0,0};
     private double ySpeedLogs[] = {0,0,0,0,0};
+    private double aveLast5Speed = 0.0;
     private int count=0;
     private double previousVerticalRightEncoderWheelPosition = 0, previousVerticalLeftEncoderWheelPosition = 0, prevNormalEncoderWheelPosition = 0;
     private double Y_COUNTS_PER_INCH = 307.7; // should be synchronized with MechChassis.java
@@ -67,6 +68,7 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
     public double getlRotations() { return lRotations; }
     public double getrRotations() { return rRotations; }
     public double getCurSpeed() { return curSpeed; }
+    public double getAveLast5Speed() { return aveLast5Speed; }
     public double getMaxSpeed() { return maxSpeed; }
     public double getCurAcc() { return curAcc; }
     public double getMinAcc() { return minAcc; }
@@ -185,6 +187,7 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
         if (count > 4) {
             ySpeedDegree = (ySpeedLogs[0]+ySpeedLogs[1]+ySpeedLogs[2]+ySpeedLogs[3]+ySpeedLogs[4])/5.0;
             xSpeedDegree = (xSpeedLogs[0]+xSpeedLogs[1]+xSpeedLogs[2]+xSpeedLogs[3]+xSpeedLogs[4])/5.0;
+            aveLast5Speed = Math.hypot(ySpeedDegree, xSpeedDegree);
 //            if ((ySpeedDegree+xSpeedDegree<1) && useIMU) { // robot is almost stop
 //                robotOrientationRadians = Math.toRadians(orientationSensor.getHeading())+initRadians;
 //            }
