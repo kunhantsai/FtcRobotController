@@ -85,7 +85,7 @@ public class ToboBeta extends Logger<ToboBeta> implements Robot2 {
     private boolean useChassis = true;
     public boolean useVuforia = false;
     public boolean useTfod = false;
-    public boolean useGrabber = true;
+    public boolean useGrabber = false;
     public boolean useHopper = false;
     public boolean useShooter = false;
     public boolean useIntake = false;

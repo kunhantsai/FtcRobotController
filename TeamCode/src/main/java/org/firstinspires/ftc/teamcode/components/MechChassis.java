@@ -804,6 +804,10 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
         }
     }
 
+    public double stopDistancePrediction(double speed) {
+        return 2.81 + 0.00382058 * Math.pow(speed, 2);
+    }
+
     public void driveToPID(double power, double target_x, double target_y, double target_heading, boolean useRotateTo,
                         boolean headingCorrection, double timeout_sec) throws InterruptedException {
         if (simulation_mode) { // simulation mode
@@ -884,20 +888,24 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
         double pk = 0.9; // PID constants
         double ik = 0.0;
         double dk = 0.0;
-        double stop_dist = 3;
+        double stop_dist = 0;
+        double min_power = 0.2;
+        if (Math.abs(desiredDegree)<=90)
+            min_power=0.2+Math.abs(desiredDegree)*0.3/90.0;   // 0.5 for 90 degree
+        else
+            min_power=0.2+(180-Math.abs(desiredDegree))*0.3/90.0;
+
         while((traveledPercent<.995) && (System.currentTimeMillis() - iniTime < timeout_sec * 1000)) {
             traveledPercent = Math.hypot(cur_y - init_y, cur_x-init_x)/total_dist;
             remDistance = Math.hypot(target_x- cur_x, target_y - cur_y);
             auto_travel_p = traveledPercent;
             PID_current_error = 1-traveledPercent;
             cur_speed = odo_ave_last5_speed_cm();
-            stop_dist = 3;
             if (remDistance<50) {
-                // stop_dist += .0044824 * Math.pow(cur_speed, 2);
-                stop_dist += .0041562 * Math.pow(cur_speed, 2);
+                stop_dist = stopDistancePrediction(cur_speed);
             }
             if (traveledPercent>0.995 || (remDistance<stop_dist&&total_dist>=20&&power>=0.5)) {
-                auto_exit_speed = odo_speed_cm(); // exiting speed
+                auto_exit_speed = cur_speed; // exiting speed
                 auto_stop_early_dist = stop_dist;
                 break;
             }
@@ -917,16 +925,20 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
                 PID_output = pk*PID_current_error+ik*PID_current_error*(cur_time-prev_time)+dk*(PID_previous_error-PID_current_error)/(cur_time-prev_time);
             prev_time=cur_time;
 
-            //find powerUsed based on PID error
-                if(traveledPercent<0.5||remDistance>60||PID_output >1){
-                    powerUsed = power;
-                } else{
-                    powerUsed = power*PID_output;
-                    if (powerUsed<0.2) powerUsed=0.2;
-                }
-                if (traveledPercent<0.9) {
+            if (traveledPercent<0.95) {
                 desiredDegree = Math.toDegrees(Math.atan2(target_x - cur_x, target_y - cur_y));
             }
+
+            //find powerUsed based on PID error
+            if(traveledPercent<0.5||remDistance>60||PID_output >1){
+                powerUsed = power;
+            } else{
+                powerUsed = power*PID_output;
+                if (powerUsed<min_power) {
+                    powerUsed = min_power;
+                }
+            }
+
             debug("PID_ouput=%3.2f,pw=%.2f, (x,y,sp)= (%.3f,%.3f,%.1f), (PK,IK,DK)=(%.2f,%.2f,%.2f)", PID_output, powerUsed, cur_x, cur_y, odo_ave_last5_speed_cm(),pk,ik,dk);
             if (Thread.interrupted()) break;
             if (!TaskManager.isEmpty()) {
@@ -942,6 +954,7 @@ public class MechChassis extends Logger<MechChassis> implements Configurable {
             loop_count ++;
             // info("Odo-y-speed = %3.2f", verticalRightEncoder.getVelocity(AngleUnit.DEGREES));
         }
+        debug("driveToPID exit-loop: stop_dist=%.1f,stop_speed=%.1f",auto_stop_early_dist,auto_exit_speed);
         double end_loop_time = System.currentTimeMillis();
         if (autoDriveMode== AutoDriveMode.STOP_NO_CORRECTION || autoDriveMode== AutoDriveMode.STOP) {
             stopNeg(motorPowers);
